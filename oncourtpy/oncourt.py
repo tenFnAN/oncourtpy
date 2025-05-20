@@ -56,7 +56,8 @@ class OncourtDb:
         .assign(
             type  = self.type, 
             type2 = lambda x: np.where(x['P1'].str.contains('/'), 'double', 'single'), 
-            id    = lambda x:x['P1'] + x['P2'] + x['NAME_T'])
+            id    = lambda x:x['P1'] + x['P2'] + x['NAME_T'],
+            TIER_T= lambda x:x['TIER_T'].astype(str).str.strip() )
         .sort_values(['id', 'ODDS_B'], ascending = [True, False])
         .groupby(['id'])
         .head(1) 
@@ -87,6 +88,7 @@ class OncourtDb:
             type2 = lambda x: np.where(x['P1'].str.contains('/'), 'double', 'single'), 
             id_P2 = lambda x: np.where(x['id_P2'].isna(), x['idPlayer2'], x['id_P2']),
             id_P1 = lambda x: np.where(x['id_P1'].isna(), x['idPlayer'], x['id_P1']),
+            TIER_T= lambda x:x['TIER_T'].astype(str).str.strip(),
             id    = lambda x: np.where(x['id_P1'] < x['id_P2'], x['P1'].astype(str), x['P2'].astype(str)) + np.where(x['id_P1'] < x['id_P2'], x['P2'].astype(str), x['P1'].astype(str)) + x['NAME_T'].astype(str) + x['DATE_G'].astype(str) ) 
         .sort_values(['id', 'ODDS_B'], ascending = [True, False])
         .groupby(['id'])
