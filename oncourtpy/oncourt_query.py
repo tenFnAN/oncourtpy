@@ -3,6 +3,9 @@
 # QUERY DEFINITION
 ###
 # query = open('query/query_schedule.sql', 'r').read()
+ODDS_BOOKMAKER_FILTER = "(( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is Null))"
+STAT_TYPE_COLUMNS = "MT, ID1, ID2, ID_T, ID_R, ACES_1, ACES_2, DF_1, DF_2, TPW_1, TPW_2, FS_1, FS_2, FSOF_1, FSOF_2, W1S_1, W1S_2, W1SOF_1, W1SOF_2, W2S_1, W2S_2, W2SOF_1, W2SOF_2, RPW_1, RPW_2, RPWOF_1, RPWOF_2, BP_1, BP_2, BPOF_1, BPOF_2"
+
 query_dict = {'schedule_today' : """SELECT podzap.DATE_GAME as DATE_G, Hour(DATE_GAME) as DATE_H, podzap.DRAW, podzap.P1, podzap.idP1 as id_P1, podzap.P2, podzap.idP2 as id_P2, podzap.Country_P1, podzap.Country_P2, podzap.NAME_R, podzap.TIER_T, podzap.NAME_T, podzap.PRIZE_T,
 podzap.NAME_C, podzap.RANK_T, podzap.LATITUDE_T, podzap.LONGITUDE_T, podzap.COUNTRY_T, podzap.PLAY_LEFT_P1, podzap.PLAY_LEFT_P2,
 podzap.DATE_Birth_P1, podzap.DATE_Birth_P2 ,seed_type.SEEDING AS SEED_P1, seed_type_1.SEEDING AS SEED_P2,
@@ -39,7 +42,7 @@ FROM odds_type RIGHT JOIN (seed_type AS seed_type_1 RIGHT JOIN (seed_type RIGHT 
                                                                 AS podzap ON (seed_type.ID_P_S = podzap.idP1) AND (seed_type.ID_T_S = podzap.ID_T)) ON (seed_type_1.ID_T_S = podzap.ID_T) AND
                            (seed_type_1.ID_P_S = podzap.idP2)) ON (odds_type.ID_R_O = podzap.ID_R) AND
 (odds_type.ID_T_O = podzap.ID_T) AND (odds_type.ID2_O = podzap.idP2) AND (odds_type.ID1_O = podzap.idP1)
-WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is Null));
+WHERE __ODDS_BOOKMAKER_FILTER__;
 """,
 
 'schedule_historical' : """SELECT
@@ -80,11 +83,11 @@ FROM odds_type RIGHT JOIN (seed_type AS seed_type_1 RIGHT JOIN (seed_type RIGHT 
                                                                                                           players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat, categories_type as cat_P1
                                                                                                           WHERE ( ((g.ID2_G)=[pl2].[ID_P]) AND ((g.ID_R_G)=[r].[ID_R]) AND (cat.ID_P = pl2.ID_P) AND (cat_P1.ID_P = pl1.ID_P) AND
                                                                                                                   ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G ) as podzap1  LEFT JOIN (
-                                                                                                                    select * from stat_type ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                                                                                                    select ID1, ID2, ID_T, ID_R from stat_type ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
                                                                                       where podzap1.DATE_G is not null and podzap1.DATE_G >= #{date_min}# and podzap1.DATE_G <= #{date_max}#
 )  AS podzap2 ON (seed_type.ID_T_S = podzap2.ID_T) AND (seed_type.ID_P_S = podzap2.ID1)) ON (seed_type_1.ID_P_S = podzap2.ID2) AND (seed_type_1.ID_T_S = podzap2.ID_T)) ON
 (odds_type.ID_T_O = podzap2.ID_T) AND (odds_type.ID2_O = podzap2.ID2) AND (odds_type.ID1_O = podzap2.ID1) AND (odds_type.ID_R_O = podzap2.ID_R)
-WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is Null))
+WHERE __ODDS_BOOKMAKER_FILTER__
 UNION
 
 SELECT
@@ -125,11 +128,11 @@ FROM odds_type RIGHT JOIN (seed_type AS seed_type_1 RIGHT JOIN (seed_type RIGHT 
                                                                                                                                 players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat, categories_type as cat_P1
                                                                                                                                 WHERE ( ((g.ID2_G)=[pl2].[ID_P]) AND ((g.ID_R_G)=[r].[ID_R]) AND (cat.ID_P = pl1.ID_P) AND (cat_P1.ID_P = pl2.ID_P) AND
                                                                                                                                         ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G ) as podzap1  LEFT JOIN (
-                                                                                                                                          select * from stat_type ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1 and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                                                                                                                          select ID1, ID2, ID_T, ID_R from stat_type ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1 and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
                                                                                       where podzap1.DATE_G is not null and podzap1.DATE_G >= #{date_min}# and podzap1.DATE_G <= #{date_max}#
 )  AS podzap2 ON (seed_type.ID_T_S = podzap2.ID_T) AND (seed_type.ID_P_S = podzap2.ID2)) ON (seed_type_1.ID_P_S = podzap2.ID1) AND (seed_type_1.ID_T_S = podzap2.ID_T)) ON
 (odds_type.ID_T_O = podzap2.ID_T) AND (odds_type.ID1_O = podzap2.ID1) AND (odds_type.ID2_O = podzap2.ID2) AND (odds_type.ID_R_O = podzap2.ID_R)
-WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is Null));""",
+WHERE __ODDS_BOOKMAKER_FILTER__;""",
 
 'playerdata' : """SELECT * from (
   SELECT podzap1.*,
@@ -177,7 +180,7 @@ WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is N
                                 players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat 
                                 WHERE ((pl1.ID_P) IN ({players_id}) AND ((g.ID2_G)=[pl2].[ID_P]) AND ((g.ID_R_G)=[r].[ID_R]) AND (cat.ID_P = pl2.ID_P) AND
                                        ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G and g.DATE_G >= #{date_min}# and g.DATE_G <= #{date_max}# ) as podzap1  LEFT JOIN (
-                                  select * from stat_type where ID1 IN ({players_id}) ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                  select __STAT_TYPE_COLUMNS__ from stat_type where ID1 IN ({players_id}) ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
   where podzap1.DATE_G is not null
   UNION
   SELECT podzap1.*,
@@ -225,7 +228,7 @@ WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is N
                                                  players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat
                                                  WHERE (((pl2.ID_P) IN ({players_id})) AND (g.ID2_G)=[pl2].[ID_P]
                                                         AND ((g.ID_R_G)=[r].[ID_R])  AND (cat.ID_P = pl1.ID_P) AND ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G and g.DATE_G >= #{date_min}# and g.DATE_G <= #{date_max}# ) as podzap1  LEFT JOIN (
-                                                   select * from stat_type where ID2 IN ({players_id}) ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                                   select __STAT_TYPE_COLUMNS__ from stat_type where ID2 IN ({players_id}) ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
   where podzap1.DATE_G is not null
 ) ORDER BY DATE_G DESC;""",
 
@@ -270,7 +273,7 @@ WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is N
                                  players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat
                                  WHERE ( ((g.ID2_G)=[pl2].[ID_P]) AND ((g.ID_R_G)=[r].[ID_R]) AND (cat.ID_P = pl2.ID_P) AND
                                          ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G and g.DATE_G >= #{date_min}# and g.DATE_G <= #{date_max}# ) as podzap1  LEFT JOIN (
-                                   select * from stat_type ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                   select __STAT_TYPE_COLUMNS__ from stat_type ) as s ON podzap1.idPlayer = s.ID1 AND podzap1.idPlayer2 = s.ID2  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
   where podzap1.DATE_G is not null
   UNION
   SELECT podzap1.*,
@@ -312,11 +315,17 @@ WHERE (( (odds_type.ID_B_O)=1 or (odds_type.ID_B_O)=2 Or (odds_type.ID_B_O) Is N
                                                  FROM
                                                  players_type AS pl2, rounds AS r, tours_type AS t, courts AS c, players_type AS pl1, games_type AS g, categories_type as cat
                                                  WHERE ( (g.ID2_G)=[pl2].[ID_P] AND ((g.ID_R_G)=[r].[ID_R])  AND (cat.ID_P = pl1.ID_P) AND ((t.ID_C_T)=[c].[ID_C]) AND ((pl1.ID_P)=[g].[ID1_G])) and t.ID_T = g.ID_T_G and g.DATE_G >= #{date_min}# and g.DATE_G <= #{date_max}# ) as podzap1  LEFT JOIN (
-                                                   select * from stat_type ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
+                                                   select __STAT_TYPE_COLUMNS__ from stat_type ) as s ON podzap1.idPlayer = s.ID2 AND podzap1.idPlayer2 = s.ID1  and podzap1.ID_T = s.ID_T and podzap1.ID_R = s.ID_R
   where podzap1.DATE_G is not null
 ) ORDER BY DATE_G DESC""",
 
 'playerranking' : """SELECT distinct *
   FROM ratings_type INNER JOIN players_type ON ratings_type.ID_P_R = players_type.ID_P
-  WHERE (((ratings_type.DATE_R)>Now()-{offset}))
+  WHERE (((ratings_type.DATE_R)>=Date()-{offset}))
   ORDER BY DATE_R DESC, POS_R ASC"""}
+
+for key in ('schedule_today', 'schedule_historical'):
+    query_dict[key] = query_dict[key].replace('__ODDS_BOOKMAKER_FILTER__', ODDS_BOOKMAKER_FILTER)
+
+for key in ('playerdata', 'matches'):
+    query_dict[key] = query_dict[key].replace('__STAT_TYPE_COLUMNS__', STAT_TYPE_COLUMNS)
